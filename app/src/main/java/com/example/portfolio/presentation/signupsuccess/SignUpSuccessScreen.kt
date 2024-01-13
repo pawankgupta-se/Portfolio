@@ -20,16 +20,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.portfolio.R
 import com.example.portfolio.presentation.common.Avatar
 import com.example.portfolio.presentation.common.CustomButton
 import com.example.portfolio.presentation.common.TopBarWithSubtitle
 import com.example.portfolio.ui.theme.Dimens
+import com.example.portfolio.ui.theme.PortfolioTheme
 
 
 @Composable
-fun SignUpSuccessScreen(modifier: Modifier = Modifier, viewModel: SignUpSuccessViewModel) {
-    val state = viewModel.uiState
+fun SignUpSuccessScreen(modifier: Modifier = Modifier, state: SignUpSuccessState) {
     val uriHandler = LocalUriHandler.current
 
     Scaffold(
@@ -77,4 +78,12 @@ fun SignUpSuccessScreen(modifier: Modifier = Modifier, viewModel: SignUpSuccessV
             }
         },
     )
+}
+
+@Preview
+@Composable
+fun SignUpSuccessScreenPreview() {
+    PortfolioTheme {
+        SignUpSuccessScreen(state = SignUpSuccessState())
+    }
 }

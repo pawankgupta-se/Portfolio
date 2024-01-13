@@ -16,10 +16,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.example.portfolio.BuildConfig
@@ -29,33 +33,35 @@ import com.example.portfolio.presentation.common.CustomButton
 import com.example.portfolio.presentation.common.CustomTextField
 import com.example.portfolio.presentation.common.TopBarWithSubtitle
 import com.example.portfolio.ui.theme.Dimens
+import com.example.portfolio.ui.theme.PortfolioTheme
 import com.example.portfolio.util.createImageFile
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import java.util.Objects
 
 
 @Composable
 fun SignUpScreen(
     modifier: Modifier = Modifier,
-    viewModel: SignUpViewModel,
+    state: SignUpScreenState,
+    onEvent: (SignUpFormEvent) -> Unit,
+    validationEvents: Flow<ValidationEvent>,
     onSignUpSuccess: () -> Unit
 ) {
     val context = LocalContext.current
-    val state = viewModel.uiState
-
     val uri = uriBuilder(context)
 
     val cameraLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
-            result->
-            if(result) {
-                viewModel.onEvent(SignUpFormEvent.AvatarChanged(uri.toString()))
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { result ->
+            if (result) {
+                onEvent(SignUpFormEvent.AvatarChanged(uri.toString()))
             }
         }
 
     val permissionLauncher = rememberPermissionLauncher(uri, cameraLauncher)
 
     LaunchedEffect(key1 = context) {
-        viewModel.validationEvents.collect { event ->
+        validationEvents.collect { event ->
             when (event) {
                 is ValidationEvent.Success -> {
                     onSignUpSuccess()
@@ -87,12 +93,12 @@ fun SignUpScreen(
                     }
                 )
 
-                FormSection(state, viewModel)
+                FormSection(state, onEvent)
 
                 Spacer(modifier = Modifier.weight(1f))
 
                 CustomButton(label = stringResource(R.string.submit_button_text)) {
-                    viewModel.onEvent(SignUpFormEvent.Submit)
+                    onEvent(SignUpFormEvent.Submit)
                 }
             }
         },
@@ -102,32 +108,33 @@ fun SignUpScreen(
 @Composable
 private fun FormSection(
     state: SignUpScreenState,
-    viewModel: SignUpViewModel
+    onEvent: (SignUpFormEvent) -> Unit
 ) {
+
     CustomTextField(
         modifier = Modifier.fillMaxWidth(),
         value = state.firstName,
         hint = stringResource(R.string.first_name),
-        onTextChange = { viewModel.onEvent(SignUpFormEvent.FirstNameChanged(it)) })
+        onTextChange = { onEvent(SignUpFormEvent.FirstNameChanged(it)) })
     CustomTextField(
         modifier = Modifier.fillMaxWidth(),
         hint = stringResource(R.string.email_address),
         value = state.email,
         error = state.emailError ?: "",
         isEmail = true,
-        onTextChange = { viewModel.onEvent(SignUpFormEvent.EmailChanged(it)) })
+        onTextChange = { onEvent(SignUpFormEvent.EmailChanged(it)) })
     CustomTextField(
         modifier = Modifier.fillMaxWidth(),
         value = state.password,
         error = state.passwordError ?: "",
         hint = stringResource(R.string.password),
         isPassword = true,
-        onTextChange = { viewModel.onEvent(SignUpFormEvent.PasswordChanged(it)) })
+        onTextChange = { onEvent(SignUpFormEvent.PasswordChanged(it)) })
     CustomTextField(
         modifier = Modifier.fillMaxWidth(),
         hint = stringResource(R.string.website),
         value = state.website,
-        onTextChange = { viewModel.onEvent(SignUpFormEvent.WebsiteChanged(it)) })
+        onTextChange = { onEvent(SignUpFormEvent.WebsiteChanged(it)) })
 }
 
 private fun launchCamera(
@@ -154,6 +161,7 @@ private fun uriBuilder(context: Context): Uri {
         BuildConfig.APPLICATION_ID + ".provider", file
     )
 }
+
 @Composable
 private fun rememberPermissionLauncher(
     uri: Uri,
@@ -175,4 +183,19 @@ private fun rememberPermissionLauncher(
     return permissionLauncher
 }
 
+
+@Preview
+@Composable
+fun SignUpScreenPreview() {
+
+    PortfolioTheme {
+        SignUpScreen(
+            state = SignUpScreenState(),
+            onEvent = {},
+            onSignUpSuccess = {},
+            validationEvents = flowOf<ValidationEvent>()
+        )
+    }
+
+}
 
