@@ -1,8 +1,6 @@
 package com.example.portfolio.presentation.signup
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.portfolio.domain.models.User
@@ -12,9 +10,9 @@ import com.example.portfolio.domain.usecases.ValidatePassword
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,23 +32,26 @@ class SignUpViewModel @Inject constructor(
     fun onEvent(event: SignUpFormEvent) {
         when (event) {
             is SignUpFormEvent.AvatarChanged -> {
-                _uiState.value = _uiState.value.copy(avatar = event.avatar)
+                //using update is thread safe.
+                _uiState.update { it.copy(avatar = event.avatar) }
             }
 
             is SignUpFormEvent.FirstNameChanged -> {
-                _uiState.value = _uiState.value.copy(firstName = event.firstName)
+                _uiState.update {
+                    it.copy(firstName = event.firstName)
+                }
             }
 
             is SignUpFormEvent.EmailChanged -> {
-                _uiState.value = _uiState.value.copy(email = event.email)
+                _uiState.update { it.copy(email = event.email) }
             }
 
             is SignUpFormEvent.PasswordChanged -> {
-                _uiState.value = _uiState.value.copy(password = event.password)
+                _uiState.update { it.copy(password = event.password) }
             }
 
             is SignUpFormEvent.WebsiteChanged -> {
-                _uiState.value = _uiState.value.copy(website = event.website)
+                _uiState.update { it.copy(website = event.website) }
             }
 
             is SignUpFormEvent.Submit -> {
@@ -69,16 +70,20 @@ class SignUpViewModel @Inject constructor(
         ).any { !it.successful }
 
         if (hasError) {
-            _uiState.value = _uiState.value.copy(
-                emailError = emailResult.errorMessage,
-                passwordError = passwordResult.errorMessage,
-            )
+            _uiState.update {
+                it.copy(
+                    emailError = emailResult.errorMessage,
+                    passwordError = passwordResult.errorMessage,
+                )
+            }
             return
         } else {
-            _uiState.value = _uiState.value.copy(
-                emailError = emailResult.errorMessage,
-                passwordError = passwordResult.errorMessage,
-            )
+            _uiState.update {
+                it.copy(
+                    emailError = emailResult.errorMessage,
+                    passwordError = passwordResult.errorMessage,
+                )
+            }
         }
         viewModelScope.launch {
             signup(
